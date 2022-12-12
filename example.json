@@ -1,0 +1,81 @@
+{
+  "uuid": "2a60fbce-6d6e-461e-a888-67db82d22350",
+  "kind": {
+    "l": 1,
+    "n": 1
+  },
+  "n": {
+    "full": "BAUHAUS k.s.",
+    "given": null,
+    "family": null,
+    "prefix": null,
+    "suffix": null,
+    "nick": null,
+    "previous": []
+  },
+  "acc": [{
+    "uuid": "0bb2e576-3e93-4ca3-bd79-324d77bd6eaf",
+    "account_iban": "CZ6227000000002004932031",
+    "account_number": "2004932031",
+    "bank_code": "2700",
+    "refs": [{
+      "source": "adisreg.mfcr.cz",
+      "seen": "20210206",
+      "published": "20130401"
+    }]
+  }],
+  "nat": [{
+    "regby": "A 5321 vedená u Krajského soudu v Brně",
+    "regdt": "19930729",
+    "regid": "49435388",
+    "vatid": "CZ49435388",
+    "country": "CZ"
+  }],
+  "uri": [{
+    "uuid": "27b5abd8-3730-4f7a-b92e-f68afeb4fcb7",
+    "label": "web",
+    "value": "https://www.bauhaus.cz"
+  }],
+  "phone": [{
+    "uuid": "d3f3627e-028d-4827-8753-4eb268af6d73",
+    "label": "main",
+    "value": "+420776123456"
+  }],
+  "email": [{
+    "uuid": "d8b25485-dc2f-42de-9c79-8f6e73711f4c",
+    "label": null,
+    "value": "info@bauhaus.com"
+  }],
+  "addr": [{
+    "uuid": "2dabeb5c-7f8e-471d-b27a-7ae48c4081e7",
+    "unstructured": "Strážní 852/7, Štýřice, 639 00 Brno",
+    "kind": {
+      "main": 1,
+      "billing": 1
+    },
+    "structured": {
+      "floor": null,
+      "doornumber": null,
+      "conscriptionnumber": "852",
+      "streetnumber": "7",
+      "region": null,
+      "street": "Strážní",
+      "quarter": "Štýřice",
+      "district": null,
+      "locacity": "Brno",
+      "zip": "63900",
+      "country": "Czech republic",
+      "full": "Strážní 852/7, Brno-Štýřice, 63900, Czech republic"
+    },
+    "refs": [{
+      "source": "cz.ruian",
+      "value": "31089038"
+    }],
+    "label": null,
+    "dates": [{
+      "type": "dob",
+      "value": "19910606"
+    }]
+  }],
+  "note": ""
+}
