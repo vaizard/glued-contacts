@@ -35,23 +35,30 @@ class ServiceController extends AbstractController
         $rp = $request->getQueryParams();
         if (!array_key_exists('q', $rp)) { throw new \Exception('Query parameter missing.', 400); };
         if ($rp['q'] == '') { throw new \Exception('Query parameter empty.', 400); };
-
         $qs = '
             SELECT
-              bin_to_uuid(fts.c_sub,1) as uuid,
-              GROUP_CONCAT(fts.c_fulltext SEPARATOR " ") AS ftss,
-              any_value(obj.data) as data
+                bin_to_uuid(fts.c_sub,1) as uuid,
+                GROUP_CONCAT(fts.c_fulltext SEPARATOR " ") AS ftss,
+                any_value(obj.data) as data
             FROM `t_contacts_atoms` as fts
-            LEFT JOIN (
-            SELECT 
-              c_sub
-              ,json_objectagg(c_scheme, c_data) as data
-            FROM `t_contacts_atoms` 
-            GROUP BY c_sub
-            ) as obj
-            on obj.c_sub = fts.c_sub
+                     LEFT JOIN (
+                SELECT
+                    any_value(c_sub) as c_sub,
+                    json_objectagg(c_scheme,data) as data
+                FROM (
+                         SELECT
+                             c_sub AS c_sub,
+                             c_scheme,
+                             json_arrayagg(c_data) AS data
+                         FROM `t_contacts_atoms`
+                         GROUP BY c_sub,c_scheme
+                     ) AS data
+                GROUP BY c_sub
+            ) AS obj
+            ON obj.c_sub = fts.c_sub
             GROUP BY fts.c_sub
         ';
+
         $qs = (new \Glued\Lib\QueryBuilder())->select((string) $qs);
 
         $first = 'ftss LIKE ';
@@ -60,14 +67,17 @@ class ServiceController extends AbstractController
             $qp[] = '%'.$k.'%';
             $first = "";
         }
-        $qs = 'SELECT JSON_ARRAYAGG(data) as data from (' .$qs .') x';
+        $qs = 'SELECT JSON_OBJECTAGG(uuid,data) as data from (' .$qs .') x';
+        $this->logger->debug("contacts" , [ $qs , $qp ] );
         $res = $this->db->rawQuery($qs, $qp)[0]['data'];
         $obj = new \JsonPath\JsonObject($res);
-        if (!array_key_exists('light', $rp)) {
-            $obj->remove('$[*][*]', '_v');
-            $obj->remove('$[*][*]', '_s');
-            $obj->remove('$[*][*]', '_iat');
-            $obj->remove('$[*][*]', '_iss');
+        if (!(array_key_exists('full', $rp) and ($rp['full'] == 1))) {
+            $obj->remove('$[*][*][*]', '_v');
+            $obj->remove('$[*][*][*]', '_s');
+            $obj->remove('$[*][*][*]', '_sub');
+            $obj->remove('$[*][*][*]', '_iat');
+            $obj->remove('$[*][*][*]', '_iss');
+            $obj->remove('$[*]', 'uuid');
         }
         $body = $response->getBody();
         $body->write((string)$obj);
@@ -123,3 +133,4 @@ class ServiceController extends AbstractController
     }
 
 }
+
