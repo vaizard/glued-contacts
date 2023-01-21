@@ -30,14 +30,14 @@ routes:
   # contacts / persons                                    #
   #########################################################
 
-    be_contacts_persons_v1:
-      pattern:    ${routes.be_contacts.path}/persons/v1
-      path:       ${routes.be_contacts.path}/persons/v1
+    be_contacts_v1:
+      pattern:    ${routes.be_contacts.path}/v1
+      path:       ${routes.be_contacts.path}/v1
       label:      Contacts
       dscr:       Address book.
       service:    contacts
       methods:
-        get:    Glued\Controllers\ServiceController:persons_r1
+        get:    Glued\Controllers\ServiceController:contacts_r1
 
     be_contacts_rels_v1:
       pattern:    ${routes.be_contacts.path}/rels/v1
