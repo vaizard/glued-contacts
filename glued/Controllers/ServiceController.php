@@ -62,8 +62,15 @@ class ServiceController extends AbstractController
         }
         $qs = 'SELECT JSON_ARRAYAGG(data) as data from (' .$qs .') x';
         $res = $this->db->rawQuery($qs, $qp)[0]['data'];
+        $obj = new \JsonPath\JsonObject($res);
+        if (!array_key_exists('light', $rp)) {
+            $obj->remove('$[*][*]', '_v');
+            $obj->remove('$[*][*]', '_s');
+            $obj->remove('$[*][*]', '_iat');
+            $obj->remove('$[*][*]', '_iss');
+        }
         $body = $response->getBody();
-        $body->write($res);
+        $body->write((string)$obj);
         return $response->withBody($body)->withStatus(200)->withHeader('Content-Type', 'application/json');
     }
 

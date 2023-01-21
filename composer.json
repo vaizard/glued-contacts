@@ -54,7 +54,8 @@
     "vlucas/phpdotenv": "^5",
     "keiko/uuid-shortener": "^0.6.1",
     "shuchkin/simplexlsxgen": "^1.2",
-    "youthweb/urllinker": "^1.4"
+    "youthweb/urllinker": "^1.4",
+    "galbar/jsonpath": "^2.1"
   },
   "suggest": {
     "ext-xdebug": "For dev only"
