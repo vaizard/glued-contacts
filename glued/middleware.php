@@ -54,28 +54,7 @@ $app->add(new MethodOverrideMiddleware);
 
 // Error handling middleware. This middleware must be added last. It will not handle
 // any exceptions/errors for middleware added after it.
-$jsonErrorHandler = function ($exception, $inspector) {
-    global $settings;
-    header("Content-Type: application/json");
-    $r['code']    = $exception->getCode();
-    $r['message'] = $exception->getMessage();
-    $r['title']   = $inspector->getExceptionName() ;
-    $r['file']    = $exception->getFile() . ' ' . $exception->getLine();
-    $short        = explode('\\', $r['title']);
-    $short        = (string) array_pop($short);
-    $r['hint']    = "No hints, sorry.";
-    $http         = '500 Internal Server Error';
-
-    if ($short == "AuthJwtException")       { $http = '401 Unauthorized'; $r['hint'] = "Login at ".$settings['oidc']['uri']['login']; }
-    if ($short == "AuthTokenException")     { $http = '401 Unauthorized'; $r['hint'] = "Login at ".$settings['oidc']['uri']['login']; }
-    if ($short == "HttpNotFoundException")  { $http = '404 Not fond'; }
-    if ($r['message'] == "MSSQL error.")    { $r['hint'] = sqlsrv_errors(); }
-
-    header($_SERVER['SERVER_PROTOCOL'].' '.$http);
-    echo json_encode($r, JSON_UNESCAPED_SLASHES);
-    exit;
-};
-
+$jsonErrorHandler = require_once(__ROOT__ . '/vendor/vaizard/glued-lib/src/Includes/json_error_handler.php');
 $app->add(new Zeuxisoo\Whoops\Slim\WhoopsMiddleware([
     'enable' => true,
     'editor' => 'phpstorm',

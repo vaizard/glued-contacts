@@ -1,6 +1,6 @@
 {
-  "name": "vaizard/glued-skeleton",
-  "description": "A skeleton microservice for the Glued project.",
+  "name": "vaizard/glued-contacts",
+  "description": "Contacts microservice for the Glued project.",
   "license": "MIT",
   "authors": [
     {
