@@ -30,6 +30,34 @@ class ServiceController extends AbstractController
         throw new \Exception('Stub method served where it shouldn\'t. Proxy misconfiguration?');
     }
 
+    public function contacts_cu1(Request $request, Response $response, array $args = []): Response {
+        $headers = '';
+        foreach ($request->getHeaders() as $name => $values) {
+            $headers .= $name . ": " . implode(", ", $values);
+        }
+        $r = [
+            'qp' => $request->getQueryParams(),
+            'pb' => $request->getParsedBody(),
+            'fi' => $request->getUploadedFiles(),
+            'hd' => $headers
+        ];
+        return $response->withJson($r);
+    }
+
+    public function contacts_d1(Request $request, Response $response, array $args = []): Response {
+        $headers = '';
+        foreach ($request->getHeaders() as $name => $values) {
+            $headers .= $name . ": " . implode(", ", $values);
+        }
+        $r = [
+            'qp' => $request->getQueryParams(),
+            'pb' => $request->getParsedBody(),
+            'fi' => $request->getUploadedFiles(),
+            'hd' => $headers
+        ];
+        return $response->withJson($r);
+    }
+
     public function contacts_r1(Request $request, Response $response, array $args = []): Response {
         $qp = [];
         $rp = $request->getQueryParams();

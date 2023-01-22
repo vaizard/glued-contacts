@@ -14,14 +14,58 @@ Metadata
 
 - `_s` is schema name (i.e. name, vatid, address, phone, etc.)
 - `_v` is schema version
-- `_iss` is the object's issuer (authoritative source)
-- `_sub` is the object's subject (the person )
+- `_iss` is the object's issuer (authoritative source - i.e. url of a public registry which carries the atom or the uuid of the user who entered the data manually)
+- `_sub` is the object's subject (the person)
+- `_iat` issued at time (timestamp when the issuer/source first published the info)
+- `_exp` expired (timestamp since when the information is no longer valid)
+- `_vat` valid at time (timestamp of last validation of the data)
 
 Required data
 
 - `uuid` is the atom's unique identifier
 - `kind` is atom kind (technically not required) 
 - `value` is the unstructured data that is also used for fulltext search
+
+Schemes and kinds
+
+- address
+- date
+  - kind:foundation
+  - kind:dissolution
+  - kind:birth
+  - kind:death
+  - kind:anniversary
+- email
+- natid - rodné číslo
+- phone
+- regid - ičo
+- vatid - dič
+- vat_payer - současný stav + historie
+- payroll
+  - object:nationality (string - countrycode)
+  - object:citizenship (array of objects - string countrycode, timestamp - iat, timestamp - exp)
+  - object:taxdomicile (array of objects - string countrycode, timestamp - iat, timestamp - exp)
+  - health_insurance  (array of objects - string, timestamp - iat, timestamp - exp)
+  - can_issue_invoices
+  - status <= NOTE that status is to play along with the `stor/annotations` api
+    - marital (doloženo formulářem zaměstnance)
+    - student (student od do na základě potvrzení o studiu - anotovany dokument s platností od do)
+    - taxpayer_declaration (růžový papír - anotoaný dokument s platností období od do)
+    - disability (na základě potvrzení - anotoaný dokument s platností od do)
+    - offspring (sleva na dítě na základě potvrzení o studiu či jiného dokumentu - anotovany dokument s platností od do)
+    - contract (smlouva s platností od, nebo od-do - anotovaný dokument a typem)
+- supplier
+- client
+- uri
+  - website
+- uuid
+- docs - <= NOTE is to play along with the `stor/annotations` api
+  - passport - pas 
+  - id card - občanka
+  - drivers licence
+  - hygienický průkaz
+  - ISO certifikát 
+  - ...
 
 Working with data stored as described above requires a less common querying and
 presentation scheme. Both is described below:

@@ -38,6 +38,10 @@ routes:
       service:    contacts
       methods:
         get:    Glued\Controllers\ServiceController:contacts_r1
+        post:   Glued\Controllers\ServiceController:contacts_cu1
+        put:    Glued\Controllers\ServiceController:contacts_cu1
+        patch:  Glued\Controllers\ServiceController:contacts_cu1
+        delete: Glued\Controllers\ServiceController:contacts_d1
 
     be_contacts_rels_v1:
       pattern:    ${routes.be_contacts.path}/rels/v1
