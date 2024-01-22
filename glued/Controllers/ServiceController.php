@@ -14,6 +14,7 @@ use Glued\Classes\Exceptions\AuthOidcException;
 use Glued\Classes\Exceptions\DbException;
 use Glued\Classes\Exceptions\TransformException;
 use Symfony\Component\Config\Definition\Exception\Exception;
+use Ramsey\Uuid\Uuid;
 
 
 class ServiceController extends AbstractController
@@ -30,20 +31,6 @@ class ServiceController extends AbstractController
         throw new \Exception('Stub method served where it shouldn\'t. Proxy misconfiguration?');
     }
 
-    public function contacts_cu1(Request $request, Response $response, array $args = []): Response {
-        $headers = '';
-        foreach ($request->getHeaders() as $name => $values) {
-            $headers .= $name . ": " . implode(", ", $values);
-        }
-        $r = [
-            'qp' => $request->getQueryParams(),
-            'pb' => $request->getParsedBody(),
-            'fi' => $request->getUploadedFiles(),
-            'hd' => $headers
-        ];
-        return $response->withJson($r);
-    }
-
     public function contacts_d1(Request $request, Response $response, array $args = []): Response {
         $headers = '';
         foreach ($request->getHeaders() as $name => $values) {
@@ -58,58 +45,96 @@ class ServiceController extends AbstractController
         return $response->withJson($r);
     }
 
-    public function contacts_r1(Request $request, Response $response, array $args = []): Response {
-        $qp = [];
-        $rp = $request->getQueryParams();
-        if (!array_key_exists('q', $rp)) { throw new \Exception('Query parameter missing.', 400); };
-        if ($rp['q'] == '') { throw new \Exception('Query parameter empty.', 400); };
-        $qs = '
-            SELECT
-                bin_to_uuid(fts.c_sub,1) as uuid,
-                GROUP_CONCAT(fts.c_fulltext SEPARATOR " ") AS ftss,
-                any_value(obj.data) as data
-            FROM `t_contacts_atoms` as fts
-                     LEFT JOIN (
-                SELECT
-                    any_value(c_sub) as c_sub,
-                    json_objectagg(c_scheme,data) as data
-                FROM (
-                         SELECT
-                             c_sub AS c_sub,
-                             c_scheme,
-                             json_arrayagg(c_data) AS data
-                         FROM `t_contacts_atoms`
-                         GROUP BY c_sub,c_scheme
-                     ) AS data
-                GROUP BY c_sub
-            ) AS obj
-            ON obj.c_sub = fts.c_sub
-            GROUP BY fts.c_sub
-        ';
+    private function contacts_patch($json, $objUUID = null)
+    {
+        if (is_null($objUUID)) { $objUUID = Uuid::uuid4()->toString(); }
+        $q = " 
+        INSERT INTO `t_contacts_objects` 
+            (`c_uuid`, `c_data`) VALUES (uuid_to_bin(?, 1), ?) 
+        ON DUPLICATE KEY UPDATE
+            c_data = JSON_MERGE_PATCH(c_data, values(c_data)),
+            c_rev = c_rev + 1
+        ";
+        return $this->mysqli->execute_query($q, [ $objUUID, $json ]);
+    }
 
-        $qs = (new \Glued\Lib\QueryBuilder())->select((string) $qs);
-
-        $first = 'ftss LIKE ';
-        foreach (explode(" ", $rp['q']) as $k) {
-            $qs->having($first.'?');
-            $qp[] = '%'.$k.'%';
-            $first = "";
-        }
-        $qs = 'SELECT JSON_OBJECTAGG(uuid,data) as data from (' .$qs .') x';
-        $this->logger->debug("contacts" , [ $qs , $qp ] );
-        $res = $this->db->rawQuery($qs, $qp)[0]['data'];
-        $obj = new \JsonPath\JsonObject($res);
-        if (!(array_key_exists('full', $rp) and ($rp['full'] == 1))) {
-            $obj->remove('$[*][*][*]', '_v');
-            $obj->remove('$[*][*][*]', '_s');
-            $obj->remove('$[*][*][*]', '_sub');
-            $obj->remove('$[*][*][*]', '_iat');
-            $obj->remove('$[*][*][*]', '_iss');
-            $obj->remove('$[*]', 'uuid');
-        }
-        $body = $response->getBody();
-        $body->write((string)$obj);
+    public function contacts_p1(Request $request, Response $response, array $args = []): Response {
+        $data = $request->getParsedBody();
+        echo $data;
+        echo ($args['uuid'] ?? null);
+        return $response;
         return $response->withBody($body)->withStatus(200)->withHeader('Content-Type', 'application/json');
+    }
+
+    public function contacts_r1(Request $request, Response $response, array $args = []): Response {
+        $wq = "";
+        $data = [];
+        $object = $args['uuid'] ?? false;
+        $q = $request->getQueryParams()['q'] ?? false;
+        if ($object) { $wq .= " AND c_uuid = uuid_to_bin(?, true)"; $data[] = $object; }
+        if ($q) { $wq .= " AND c_ft LIKE CONCAT('%',?,'%')"; $data[] = $q; }
+
+        $q = "SELECT JSON_ARRAYAGG(JSON_INSERT(c_data, '$.uuid', bin_to_uuid(c_uuid, true))) AS data 
+              FROM t_contacts_objects
+              WHERE 1=1 $wq
+              ";
+
+        $result = $this->mysqli->execute_query($q, $data);
+        $obj = null;
+        foreach ($result as $row) { $data = json_decode($row['data'] ?? '{}'); break; }
+        $data = [
+            'timestamp' => microtime(),
+            'status' => 'OK',
+            'data' => $data,
+            'service' => basename(__ROOT__),
+        ];
+        return $response->withJson($data);
+    }
+
+    public function import_r1(Request $request, Response $response, array $args = []): Response {
+        $action = $args['act'] ?? null;
+        $fid = $args['key'] ?? null;
+
+        $sql = "
+        INSERT INTO `t_contacts_objects` (`c_uuid`, `c_data`, `c_ft`)
+        SELECT
+          uuid_to_bin(uuid(), true) AS `c_uuid`,
+          c_data AS `c_data`,
+          GROUP_CONCAT(extracted_val.val SEPARATOR ' ') AS c_ft
+        FROM
+          `t_if__objects`,
+           JSON_TABLE(
+             c_data,
+              '$**.val' COLUMNS (
+                val VARCHAR(255) PATH '$'
+              )
+           ) AS extracted_val
+        WHERE c_action = uuid_to_bin(?, true) AND c_fid = ?
+        GROUP BY c_data 
+        ON DUPLICATE KEY UPDATE
+          `c_ft` = VALUES(`c_ft`);
+        ";
+        $stmt = $this->mysqli->prepare($sql);
+        $stmt->bind_param("ss", $action, $fid);
+        $stmt->execute();
+        $stmt->close();
+
+        $q = "SELECT  bin_to_uuid(co.c_uuid, true) as uuid FROM `t_if__objects` io
+              left join t_contacts_objects co ON co.c_hash = io.c_hash
+              WHERE io.c_action = uuid_to_bin(?, true) AND io.c_fid = ?
+        ";
+        $result = $this->mysqli->execute_query($q,[ $action, $fid]);
+        $obj = null;
+        foreach ($result as $row) { $obj = $row; break; }
+        if (is_null($obj)) { throw new \Exception('Contact not imported.', 500); }
+
+        $data = [
+            'timestamp' => microtime(),
+            'status' => 'OK',
+            'service' => basename(__ROOT__),
+            'data' => $obj
+        ];
+        return $response->withJson($data);
     }
 
 
@@ -151,7 +176,7 @@ class ServiceController extends AbstractController
                     json_object("uuid", bin_to_uuid( `c_uuid`, true)),
                     `c_data`
                 ) as res_rows
-        from `t_fare_rels`
+        from `t_contacts_rels`
         EOT;
         $qs = (new \Glued\Lib\QueryBuilder())->select($qs);
         $wm = [ 'tags' => 'json_contains(`c_data`->>"$.tags", ?)' ];

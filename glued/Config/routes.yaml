@@ -17,8 +17,8 @@ routes:
     #########################################################
 
     be_contacts_health_v1:
-        pattern:    ${routes.be_contacts.path}/health/v1
-        path:       ${routes.be_contacts.path}/health/v1
+        pattern:    ${routes.be_contacts.path}/v1/health
+        path:       ${routes.be_contacts.path}/v1/health
         label:      contacts health
         dscr:       A healthcheck endpoint for the microservice.
         service:    contacts
@@ -31,32 +31,29 @@ routes:
   #########################################################
 
     be_contacts_v1:
-      pattern:    ${routes.be_contacts.path}/v1
-      path:       ${routes.be_contacts.path}/v1
+      pattern:    ${routes.be_contacts.path}/v1/objects[/{uuid}]
+      path:       ${routes.be_contacts.path}/v1/objects
       label:      Contacts
       dscr:       Address book.
       service:    contacts
       methods:
         get:    Glued\Controllers\ServiceController:contacts_r1
-        post:   Glued\Controllers\ServiceController:contacts_cu1
-        put:    Glued\Controllers\ServiceController:contacts_cu1
-        patch:  Glued\Controllers\ServiceController:contacts_cu1
-        delete: Glued\Controllers\ServiceController:contacts_d1
+        post:   Glued\Controllers\ServiceController:contacts_p1
 
-    be_contacts_rels_v1:
-      pattern:    ${routes.be_contacts.path}/rels/v1
-      path:       ${routes.be_contacts.path}/rels/v1
-      label:      Relationships
-      dscr:       Relationships between persons.
+    be_contacts_refs_v1:
+      pattern:    ${routes.be_contacts.path}/v1/{uuid}/refs
+      path:       ${routes.be_contacts.path}/v1/refs
+      label:      References
+      dscr:       Relationship references between contact objects.
       service:    contacts
       methods:
-        get:    Glued\Controllers\ServiceController:rels_r1
+        get:    Glued\Controllers\ServiceController:refs_r1
 
-    be_contacts_regs_v1:
-      pattern:    ${routes.be_contacts.path}/regs/v1
-      path:       ${routes.be_contacts.path}/regs/v1
-      label:      Registers
-      dscr:       Fetching data from registers.
+    be_contacts_import_v1:
+      pattern:    ${routes.be_contacts.path}/v1/import/{act}/{key}
+      path:       ${routes.be_contacts.path}/v1/import
+      label:      Import
+      dscr:       Address book.
       service:    contacts
       methods:
-        get:    Glued\Controllers\ServiceController:regs_r1
+        get:    Glued\Controllers\ServiceController:import_r1
