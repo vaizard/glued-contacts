@@ -70,14 +70,25 @@ class ServiceController extends AbstractController
         $wq = "";
         $data = [];
         $object = $args['uuid'] ?? false;
-        $q = $request->getQueryParams()['q'] ?? false;
         if ($object) { $wq .= " AND c_uuid = uuid_to_bin(?, true)"; $data[] = $object; }
-        if ($q) { $wq .= " AND c_ft LIKE CONCAT('%',?,'%')"; $data[] = $q; }
+        foreach ($request->getQueryParams() as $qp) {
+            if (is_array($qp)) {
+                foreach ($qp as $item) {
+                    $st[] = "c_ft LIKE CONCAT('%',?,'%')";
+                    $data[] = $item;
+                }
+            } else {
+                $st[] = "c_ft LIKE CONCAT('%',?,'%')";
+                $data[] = $qp;
+            }
+        }
+        if (count($request->getQueryParams())>0) {
+            $wq .= " AND " . implode(" OR ", $st);
+        }
 
         $q = "SELECT JSON_ARRAYAGG(JSON_INSERT(c_data, '$.uuid', bin_to_uuid(c_uuid, true))) AS data 
               FROM t_contacts_objects
-              WHERE 1=1 $wq
-              ";
+              WHERE 1=1 $wq";
 
         $result = $this->mysqli->execute_query($q, $data);
         $obj = null;
