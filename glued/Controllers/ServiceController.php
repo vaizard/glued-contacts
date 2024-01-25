@@ -68,31 +68,38 @@ class ServiceController extends AbstractController
 
     public function contacts_r1(Request $request, Response $response, array $args = []): Response {
         $wq = "";
+        $vals = [];
         $data = [];
         $object = $args['uuid'] ?? false;
-        if ($object) { $wq .= " AND c_uuid = uuid_to_bin(?, true)"; $data[] = $object; }
-        foreach ($request->getQueryParams() as $qp) {
-            if (is_array($qp)) {
-                foreach ($qp as $item) {
+        if ($object) {
+            // fetch an object by path
+            $vals[] = $object;
+            $q = "SELECT JSON_INSERT(c_data, '$.uuid', bin_to_uuid(c_uuid, true)) AS data 
+              FROM t_contacts_objects
+              WHERE c_uuid = uuid_to_bin(?, true)";
+        } else {
+            // fetch objects array by query params
+            foreach ($request->getQueryParams() as $qp) {
+                if (is_array($qp)) {
+                    foreach ($qp as $item) {
+                        $st[] = "c_ft LIKE CONCAT('%',?,'%')";
+                        $vals[] = $item;
+                    }
+                } else {
                     $st[] = "c_ft LIKE CONCAT('%',?,'%')";
-                    $data[] = $item;
+                    $vals[] = $qp;
                 }
-            } else {
-                $st[] = "c_ft LIKE CONCAT('%',?,'%')";
-                $data[] = $qp;
             }
-        }
-        if (count($request->getQueryParams())>0) {
-            $wq .= " AND " . implode(" OR ", $st);
-        }
-
-        $q = "SELECT JSON_ARRAYAGG(JSON_INSERT(c_data, '$.uuid', bin_to_uuid(c_uuid, true))) AS data 
+            if (count($request->getQueryParams()) > 0) {
+                $wq .= " AND " . implode(" OR ", $st);
+            }
+            $q = "SELECT JSON_ARRAYAGG(JSON_INSERT(c_data, '$.uuid', bin_to_uuid(c_uuid, true))) AS data 
               FROM t_contacts_objects
               WHERE 1=1 $wq";
+        }
 
-        $result = $this->mysqli->execute_query($q, $data);
-        $obj = null;
-        foreach ($result as $row) { $data = json_decode($row['data'] ?? '{}'); break; }
+        $result = $this->mysqli->execute_query($q, $vals);
+        foreach ($result as $row) { if ($row['data']) { $data = json_decode($row['data']); } break; }
         $data = [
             'timestamp' => microtime(),
             'status' => 'OK',
