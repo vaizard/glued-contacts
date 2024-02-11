@@ -35,7 +35,7 @@
     "middlewares/trailing-slash": "^2",
     "monolog/monolog": "^3",
     "nyholm/psr7": "^1",
-    "opis/json-schema": "^2",
+    "opis/json-schema": "^2.3",
     "php-di/php-di": "^7",
     "php-http/guzzle7-adapter": "^1",
     "php-http/message": "^1",
