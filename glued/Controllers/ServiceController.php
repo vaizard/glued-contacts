@@ -42,18 +42,28 @@ class ServiceController extends AbstractController
             },
             "uuid": { "type": "string" },
             "regid": {
-              "type": "object",
-              "properties": {
-                "val": { "type": "string" }
-              },
-              "required": ["val"]
+              "type": [ "array", "null" ],
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "val": { "type": "string" },
+                  "countrycode": { "type": "string" }
+                },
+                "required": ["val"]
+              }
             },
             "vatid": {
-              "type": "object",
-              "properties": {
-                "val": { "type": "string" }
-              },
-              "required": ["val"]
+              "type": [ "array", "null" ],
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "val": { "type": "string" },
+                  "countrycode": { "type": "string" }
+                },
+                "required": ["val"]
+              }
             },
             "address": {
               "type": "array",
@@ -85,11 +95,13 @@ class ServiceController extends AbstractController
                   "date": {
                     "type": "object",
                     "properties": {
-                      "modified": { "type": "string", "format": "date" },
-                      "expired": { "type": "string", "format": "date" },
-                      "effective": { "type": "string", "format": "date" }
-                    },
-                    "required": ["update", "effective"]
+                      "iss": { "type": "string", "format": "date", "description": "Issued at" },
+                      "eff": { "type": "string", "format": "date", "description": "Effective at" },
+                      "upd": { "type": "string", "format": "date", "description": "(Last) updated at" },
+                      "vrf": { "type": "string", "format": "date", "description": "(Last) verified at" },
+                      "exp": { "type": "string", "format": "date", "description": "Expires at" }
+                      },
+                    "required": []
                   },
                   "kind": { "type": "string" },
                   "issuer": { "type": "string" },
@@ -113,7 +125,6 @@ class ServiceController extends AbstractController
             },
             "phone": {
               "type": [ "array", "null" ],
-              "description": "naah",
               "minItems": 1,
               "items": {
                 "type": "object",
@@ -125,36 +136,54 @@ class ServiceController extends AbstractController
               }
             },
             "natid": {
-              "type": "object",
-              "properties": {
-                "val": { "type": "string" },
-                "label": { "type": "string" }
-              },
-              "required": ["val", "label"]
+              "type": [ "array", "null" ],
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "val": { "type": "string" },
+                  "label": { "type": "string" },
+                  "countrycode": { "type": "string" }
+                },
+                "required": ["val"]
+              }
             },
-            "date": {
+            "event": {
               "type": "array",
               "items": {
                 "type": "object",
                 "properties": {
-                  "kind": { "type": "string" },
-                  "val": { "type": "string", "format": "date" }
+                  "kind": { "type": "string", "enum": ["dob", "dod", "anniversary", "fiscalyear", "other"], "default": "other" },
+                  "dtstart": { "type": "string", "format": "date" },
+                  "dtend": { "type": "string", "format": "date" },
+                  "duration": { "type": "string", "format": "date" },
+                  "summary": { "type": "string" },
+                  "rrule": { "type": "string" },
+                  "rdate": { "type": "string" },
+                  "exdate": { "type": "string" },
+                  "cal": { "type": "string", "description": "Glued calendar uri" },
+                  "val": { "type": "string" }
                 },
                 "required": ["kind", "val"]
               }
             },
-            "bankaccount": {
+            "pay": {
               "type": "array",
               "items": {
                 "type": "object",
                 "properties": {
                   "iban": { "type": "string" },
-                  "account": { "type": "string" },
-                  "sortcode": { "type": "string" },
-                  "swift": { "type": "string" },
-                  "bank": { "type": "string" }
+                  "accountnr": { "type": "string" },
+                  "routingnr": { "type": "string" },
+                  "bic": { "type": "string" },
+                  "currency": { "type": "string" },
+                  "bankname": { "type": "string", "description": "Bank name" },
+                  "bankaddr": { "type": "string", "description": "Bank address" },
+                  "label": { "type": "string", "description": "User defined label such as `main CZK account`" },
+                  "uri": { "type": "array", "description": "Uris in the RFC 8905 payto scheme, or special purpose uris such as revolut.me/id" },
+                  "val": { "type": "string" }
                 },
-                "required": ["iban", "account", "sortcode", "swift", "bank"]
+                "required": ["val"]
               }
             },
             "uri": {
@@ -163,7 +192,7 @@ class ServiceController extends AbstractController
                 "type": "object",
                 "properties": {
                   "kind": { "type": "string" },
-                  "value": { "type": "string" }
+                  "val": { "type": "string" }
                 },
                 "required": ["kind", "value"]
               }
@@ -347,6 +376,9 @@ class ServiceController extends AbstractController
             throw new \Exception('Contact not imported.', 500);
         }
 
+        if (array_key_exists('uuid', $obj)) {
+            $obj['uri'] = "{$this->settings['glued']['protocol']}{$this->settings['glued']['hostname']}{$this->settings['routes']['be_contacts_v1']['path']}/{$obj['uuid']}";
+        }
         $data = [
             'timestamp' => microtime(),
             'status' => 'OK',
