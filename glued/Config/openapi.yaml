@@ -1,0 +1,138 @@
+openapi: 3.1.0
+info:
+  title: Glued Contacts Api
+  description: Contacts APIs for Glued services, including health checks, address book management, and relationship references.
+  version: 1.0.0
+  x-glued-service: contacts
+servers:
+  - url: /api/contacts
+paths:
+  /:
+    x-glued-pathname: be_contacts
+    x-glued-provides: openapi
+    get:
+      x-glued-method: Glued\Controllers\ServiceController:getOpenapi
+      summary: Contacts OpenAPI specs / Ingress
+      description: Returns the OpenAPI YAML specification for the contacts API.
+      operationId: contactsIngress
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/yaml:
+              schema:
+                type: string
+  /v1/health:
+    x-glued-pathname: be_contacts_health
+    x-glued-provides: health
+    get:
+      x-glued-method: Glued\Controllers\ServiceController:getHealth
+      summary: Healthcheck
+      description: A healthcheck endpoint.
+      operationId: contactsGetHealth
+      responses:
+        '200':
+          description: Ok
+  /v1/cards:
+    x-glued-pathname: be_contacts_cards
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\ServiceController:getCards
+      summary: Retrieve Contacts Cards
+      description: Retrieve contacts from the address book.
+      operationId: getContactsCards
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ok
+    post:
+      x-glued-method: Glued\Controllers\ServiceController:postCards
+      summary: Add Contacts Cards
+      description: Add new contacts to the address book.
+      operationId: postContactsCards
+      responses:
+        '200':
+          description: Ok
+  /v1/cards/{uuid}:
+    x-glued-pathname: be_contacts_card
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\ServiceController:getCard
+      summary: Retrieve Contacts Card
+      description: Retrieve a specific contact from the address book.
+      operationId: getContactsCard
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ok
+    post:
+      x-glued-method: Glued\Controllers\ServiceController:postCard
+      summary: Update Contacts Card
+      description: Update a specific contact in the address book.
+      operationId: postContactsCard
+      responses:
+        '200':
+          description: Ok
+  /v1/cards/{uuid}/refs:
+    x-glued-pathname: be_contacts_refs
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\ServiceController:getRefs
+      summary: Retrieve References
+      description: Retrieve relationship references between contact objects.
+      operationId: getReferences
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ok
+    post:
+      x-glued-method: Glued\Controllers\ServiceController:postRefs
+      summary: Add References
+      description: Add relationship references between contact objects.
+      operationId: postReferences
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ok
+  /v1/import/{act}/{key}:
+    x-glued-pathname: be_contacts_import
+    x-glued-provides: service
+    get:
+      x-glued-method: Glued\Controllers\ServiceController:importFromCache
+      summary: Import Contacts
+      description: Import contacts into the address book.
+      operationId: importContacts
+      parameters:
+        - name: act
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ok

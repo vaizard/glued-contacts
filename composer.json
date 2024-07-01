@@ -9,7 +9,7 @@
     }
   ],
   "require": {
-    "php": "^8.2",
+    "php": "^8.3",
     "ext-apcu": "*",
     "ext-bcmath": "*",
     "ext-curl": "*",
@@ -98,8 +98,8 @@
     ],
     "configure": [
       "vendor/vaizard/glued-lib/src/Scripts/initpaths.sh",
-      "Glued\\Lib\\ComposerHooks::configTool",
-      "vendor/vaizard/glued-lib/src/Scripts/cacheroutes.sh"
+      "vendor/vaizard/glued-lib/src/Scripts/rebuild-datacache.sh",
+      "Glued\\Lib\\ComposerHooks::configTool"
     ],
     "genkey": [
       "Glued\\Lib\\ComposerHooks::genKey"
